@@ -21,6 +21,13 @@ void _saveToSyncDB() async {
   _noteSubTitleTEC.clear();
 }
 
+void _editToSyncDB(int id) async {
+  await Supabase.instance.client
+      .from('notes').update({'title': _noteTitleTEC.text, 'subtitle': _noteSubTitleTEC.text}).eq("id", id);
+  _noteTitleTEC.clear();
+  _noteSubTitleTEC.clear();
+}
+
 Future<void> _deleteFromSyncDB(int id) async {
   await Supabase.instance.client.from('notes').delete().eq("id", id);
 }
@@ -30,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("NOTE"),
+        title: const Text("NOTE"),
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: _notesStream,
@@ -43,10 +50,49 @@ class _HomeScreenState extends State<HomeScreen> {
                     onHorizontalDragEnd: (DragEndDetails slideValue) {
                       final double? mainVelocity = slideValue.primaryVelocity;
                       if (mainVelocity != null) {
-                        if (mainVelocity > 1000) {
+                        if (mainVelocity < -1000) {
                           _deleteFromSyncDB(snapShot.data![index]["id"]);
                         }
                       }
+                    },
+                    onLongPress: (){
+                      showDialog(
+                          context: context,
+                          builder: (context) {
+                            _noteTitleTEC.text = snapShot.data![index]["title"];
+                            _noteSubTitleTEC.text = snapShot.data![index]["subtitle"];
+                            return AlertDialog(
+                              title: const Text(
+                                "Edit this note into Supabase",
+                                textAlign: TextAlign.center,
+                              ),
+                              content: SizedBox(
+                                height: 150,
+                                width: double.maxFinite,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    TextField(
+                                      controller: _noteTitleTEC,
+                                    ),
+                                    TextField(
+                                      controller: _noteSubTitleTEC,
+                                      maxLines: 3,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              actions: [
+                                ElevatedButton(
+                                    onPressed: () {
+                                      _editToSyncDB(snapShot.data![index]["id"]);
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text("Update"))
+                              ],
+                            );
+                          });
                     },
                     child: Container(
                       color: Colors.lightGreen[100],
@@ -56,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         subtitle:
                             Text(snapShot.data![index]['subtitle'].toString()),
                         trailing:
-                            Text(snapShot.data![index]['created_at'].toString()),
+                            Text(snapShot.data![index]['created_at'].toString().split('T')[0]),
                       ),
                     ),
                   );
@@ -76,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Padding(
             padding: const EdgeInsets.all(5),
             child: FloatingActionButton(onPressed: (){},
-              child: Icon(Icons.image_outlined),
+              child: const Icon(Icons.image_outlined),
             ),
           ),
           Padding(
@@ -87,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     context: context,
                     builder: (context) {
                       return AlertDialog(
-                        title: Text(
+                        title: const Text(
                           "Add a note into Supabase",
                           textAlign: TextAlign.center,
                         ),
@@ -119,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                     });
               },
-              child: Icon(Icons.add_rounded),
+              child: const Icon(Icons.add_rounded),
             ),
           ),
         ],
