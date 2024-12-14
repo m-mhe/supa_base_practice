@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:live_sync/controllers/text_data_add_controller.dart';
 import 'package:live_sync/controllers/text_data_edit_controller.dart';
+import 'package:live_sync/ui/screens/image_upload_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../controllers/text_data_delete_controller.dart';
@@ -141,7 +142,11 @@ class _HomeScreenState extends State<HomeScreen> {
           Padding(
             padding: const EdgeInsets.all(5),
             child: FloatingActionButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context){
+                  return const ImageUploadScreen();
+                }));
+              },
               child: const Icon(Icons.image_outlined),
             ),
           ),
