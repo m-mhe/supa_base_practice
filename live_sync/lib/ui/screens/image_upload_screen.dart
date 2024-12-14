@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:get/get_state_manager/src/simple/get_state.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:live_sync/controllers/image_data_upload_controller.dart';
+import 'package:live_sync/ui/widgets/bottom_pop_up_message.dart';
 
 class ImageUploadScreen extends StatefulWidget {
   const ImageUploadScreen({super.key});
@@ -12,12 +15,12 @@ class ImageUploadScreen extends StatefulWidget {
 class _ImageUploadScreenState extends State<ImageUploadScreen> {
   File? imageFile = null;
 
-  Future<void> _pick()async{
+  Future<void> _pick() async {
     ImagePicker picker = ImagePicker();
     XFile? pickedImage = await picker.pickImage(source: ImageSource.gallery);
-    if(pickedImage!=null){
+    if (pickedImage != null) {
       imageFile = File(pickedImage.path);
-      setState((){});
+      setState(() {});
     }
   }
 
@@ -32,9 +35,21 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            imageFile==null?Text('Pick an image to upload'):Image.file(imageFile!),
+            imageFile == null
+                ? const Text('Pick an image to upload')
+                : Image.file(imageFile!),
             ElevatedButton(onPressed: _pick, child: Text('Pick')),
-            ElevatedButton(onPressed: _pick, child: Text('Upload')),
+            GetBuilder<ImageDataUploadController>(builder: (controller) {
+              return Visibility(
+                  visible: !controller.loading,
+                  replacement: const CircularProgressIndicator(),
+                  child: ElevatedButton(
+                      onPressed: () async {
+                        await controller.uploadAnImage(imageFile: imageFile);
+                        bottomPopUpMessage(context: context, isError: false, message: "Success!");
+                      },
+                      child: const Text('Upload')));
+            }),
           ],
         ),
       ),

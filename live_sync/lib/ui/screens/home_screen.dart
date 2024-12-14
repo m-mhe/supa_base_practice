@@ -192,7 +192,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         subtitle: _noteSubTitleTEC.text);
                                     _noteTitleTEC.clear();
                                     _noteSubTitleTEC.clear();
-                                    Navigator.pop(context);
+                                    Get.back();
                                   },
                                   child: const Text("Save")),
                             );
