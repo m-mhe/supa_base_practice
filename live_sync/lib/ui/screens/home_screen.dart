@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:live_sync/controllers/text_data_add_controller.dart';
+import 'package:live_sync/controllers/text_data_edit_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../controllers/text_data_delete_controller.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,25 +18,6 @@ final TextEditingController _noteSubTitleTEC = TextEditingController();
 final Stream<List<Map<String, dynamic>>> _notesStream =
     Supabase.instance.client.from('notes').stream(primaryKey: ['id']);
 
-void _saveToSyncDB() async {
-  await Supabase.instance.client
-      .from('notes')
-      .insert({'title': _noteTitleTEC.text, 'subtitle': _noteSubTitleTEC.text});
-  _noteTitleTEC.clear();
-  _noteSubTitleTEC.clear();
-}
-
-void _editToSyncDB(int id) async {
-  await Supabase.instance.client
-      .from('notes').update({'title': _noteTitleTEC.text, 'subtitle': _noteSubTitleTEC.text}).eq("id", id);
-  _noteTitleTEC.clear();
-  _noteSubTitleTEC.clear();
-}
-
-Future<void> _deleteFromSyncDB(int id) async {
-  await Supabase.instance.client.from('notes').delete().eq("id", id);
-}
-
 class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
@@ -43,70 +29,103 @@ class _HomeScreenState extends State<HomeScreen> {
         stream: _notesStream,
         builder: (context, snapShot) {
           if (snapShot.hasData) {
-            return ListView.builder(
-                itemCount: snapShot.data!.length,
-                itemBuilder: (context, index) {
-                  return GestureDetector(
-                    onHorizontalDragEnd: (DragEndDetails slideValue) {
-                      final double? mainVelocity = slideValue.primaryVelocity;
-                      if (mainVelocity != null) {
-                        if (mainVelocity < -1000) {
-                          _deleteFromSyncDB(snapShot.data![index]["id"]);
-                        }
-                      }
-                    },
-                    onLongPress: (){
-                      showDialog(
-                          context: context,
-                          builder: (context) {
-                            _noteTitleTEC.text = snapShot.data![index]["title"];
-                            _noteSubTitleTEC.text = snapShot.data![index]["subtitle"];
-                            return AlertDialog(
-                              title: const Text(
-                                "Edit this note into Supabase",
-                                textAlign: TextAlign.center,
-                              ),
-                              content: SizedBox(
-                                height: 150,
-                                width: double.maxFinite,
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    TextField(
-                                      controller: _noteTitleTEC,
+            return GetBuilder<TextDataDeleteController>(builder: (controller) {
+              return Visibility(
+                visible: !controller.loading,
+                replacement: const Center(
+                  child: CircularProgressIndicator(),
+                ),
+                child: ListView.builder(
+                    itemCount: snapShot.data!.length,
+                    itemBuilder: (context, index) {
+                      return GestureDetector(
+                        onHorizontalDragEnd: (DragEndDetails slideValue) async {
+                          final double? mainVelocity =
+                              slideValue.primaryVelocity;
+                          if (mainVelocity != null) {
+                            if (mainVelocity < -1000) {
+                              await controller.deleteTextData(
+                                  id: snapShot.data![index]["id"]);
+                            }
+                          }
+                        },
+                        onLongPress: () {
+                          showDialog(
+                              context: context,
+                              builder: (context) {
+                                _noteTitleTEC.text =
+                                    snapShot.data![index]["title"];
+                                _noteSubTitleTEC.text =
+                                    snapShot.data![index]["subtitle"];
+                                return AlertDialog(
+                                  title: const Text(
+                                    "Edit this note into Supabase",
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  content: SizedBox(
+                                    height: 150,
+                                    width: double.maxFinite,
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        TextField(
+                                          controller: _noteTitleTEC,
+                                        ),
+                                        TextField(
+                                          controller: _noteSubTitleTEC,
+                                          maxLines: 3,
+                                        ),
+                                      ],
                                     ),
-                                    TextField(
-                                      controller: _noteSubTitleTEC,
-                                      maxLines: 3,
-                                    ),
+                                  ),
+                                  actions: [
+                                    GetBuilder<TextDataEditController>(
+                                        builder: (controller) {
+                                      return Visibility(
+                                        visible: !controller.loading,
+                                        replacement:
+                                            const CircularProgressIndicator(),
+                                        child: ElevatedButton(
+                                            onPressed: () async {
+                                              await controller.editTextData(
+                                                  title:
+                                                      _noteTitleTEC.text.trim(),
+                                                  subtitle:
+                                                      _noteSubTitleTEC.text,
+                                                  id: snapShot.data![index]
+                                                      ["id"]);
+                                              _noteTitleTEC.clear();
+                                              _noteSubTitleTEC.clear();
+                                              Navigator.pop(context);
+                                            },
+                                            child: const Text("Update")),
+                                      );
+                                    })
                                   ],
-                                ),
-                              ),
-                              actions: [
-                                ElevatedButton(
-                                    onPressed: () {
-                                      _editToSyncDB(snapShot.data![index]["id"]);
-                                      Navigator.pop(context);
-                                    },
-                                    child: const Text("Update"))
-                              ],
-                            );
-                          });
-                    },
-                    child: Container(
-                      color: Colors.lightGreen[100],
-                      child: ListTile(
-                        leading: Text(snapShot.data![index]['id'].toString()),
-                        title: Text(snapShot.data![index]['title'].toString()),
-                        subtitle:
-                            Text(snapShot.data![index]['subtitle'].toString()),
-                        trailing:
-                            Text(snapShot.data![index]['created_at'].toString().split('T')[0]),
-                      ),
-                    ),
-                  );
-                });
+                                );
+                              });
+                        },
+                        child: Container(
+                          color: Colors.lightGreen[100],
+                          child: ListTile(
+                            leading:
+                                Text(snapShot.data![index]['id'].toString()),
+                            title:
+                                Text(snapShot.data![index]['title'].toString()),
+                            subtitle: Text(
+                                snapShot.data![index]['subtitle'].toString()),
+                            trailing: Text(snapShot.data![index]['created_at']
+                                .toString()
+                                .split('T')[0]),
+                          ),
+                        ),
+                      );
+                    }),
+              );
+            });
           } else if (snapShot.hasError) {
             return Center(
               child: Text(snapShot.error.toString()),
@@ -121,7 +140,8 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(5),
-            child: FloatingActionButton(onPressed: (){},
+            child: FloatingActionButton(
+              onPressed: () {},
               child: const Icon(Icons.image_outlined),
             ),
           ),
@@ -155,12 +175,23 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         actions: [
-                          ElevatedButton(
-                              onPressed: () {
-                                _saveToSyncDB();
-                                Navigator.pop(context);
-                              },
-                              child: const Text("Save"))
+                          GetBuilder<TextDataAddController>(
+                              builder: (controller) {
+                            return Visibility(
+                              visible: !controller.loading,
+                              replacement: const CircularProgressIndicator(),
+                              child: ElevatedButton(
+                                  onPressed: () async {
+                                    await controller.addTextData(
+                                        title: _noteTitleTEC.text.trim(),
+                                        subtitle: _noteSubTitleTEC.text);
+                                    _noteTitleTEC.clear();
+                                    _noteSubTitleTEC.clear();
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text("Save")),
+                            );
+                          })
                         ],
                       );
                     });
