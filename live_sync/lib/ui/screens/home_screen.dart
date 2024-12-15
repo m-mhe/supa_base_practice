@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:live_sync/controllers/text_data_add_controller.dart';
 import 'package:live_sync/controllers/text_data_edit_controller.dart';
-import 'package:live_sync/ui/screens/image_upload_screen.dart';
+import 'package:live_sync/ui/screens/image_notes.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../controllers/text_data_delete_controller.dart';
@@ -25,6 +25,13 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("NOTE"),
+        actions: [
+          IconButton(onPressed: (){
+            Navigator.push(context, MaterialPageRoute(builder: (BuildContext context){
+              return const ImageNotes();
+            }));
+          }, icon: const Icon(Icons.image_outlined))
+        ],
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: _notesStream,
@@ -136,75 +143,56 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         },
       ),
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(5),
-            child: FloatingActionButton(
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context){
-                  return const ImageUploadScreen();
-                }));
-              },
-              child: const Icon(Icons.image_outlined),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(5),
-            child: FloatingActionButton(
-              onPressed: () {
-                showDialog(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        title: const Text(
-                          "Add a note into Supabase",
-                          textAlign: TextAlign.center,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text(
+                    "Add a note into Supabase",
+                    textAlign: TextAlign.center,
+                  ),
+                  content: SizedBox(
+                    height: 150,
+                    width: double.maxFinite,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        TextField(
+                          controller: _noteTitleTEC,
                         ),
-                        content: SizedBox(
-                          height: 150,
-                          width: double.maxFinite,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              TextField(
-                                controller: _noteTitleTEC,
-                              ),
-                              TextField(
-                                controller: _noteSubTitleTEC,
-                                maxLines: 3,
-                              ),
-                            ],
-                          ),
+                        TextField(
+                          controller: _noteSubTitleTEC,
+                          maxLines: 3,
                         ),
-                        actions: [
-                          GetBuilder<TextDataAddController>(
-                              builder: (controller) {
-                            return Visibility(
-                              visible: !controller.loading,
-                              replacement: const CircularProgressIndicator(),
-                              child: ElevatedButton(
-                                  onPressed: () async {
-                                    await controller.addTextData(
-                                        title: _noteTitleTEC.text.trim(),
-                                        subtitle: _noteSubTitleTEC.text);
-                                    _noteTitleTEC.clear();
-                                    _noteSubTitleTEC.clear();
-                                    Get.back();
-                                  },
-                                  child: const Text("Save")),
-                            );
-                          })
-                        ],
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    GetBuilder<TextDataAddController>(
+                        builder: (controller) {
+                      return Visibility(
+                        visible: !controller.loading,
+                        replacement: const CircularProgressIndicator(),
+                        child: ElevatedButton(
+                            onPressed: () async {
+                              await controller.addTextData(
+                                  title: _noteTitleTEC.text.trim(),
+                                  subtitle: _noteSubTitleTEC.text);
+                              _noteTitleTEC.clear();
+                              _noteSubTitleTEC.clear();
+                              Get.back();
+                            },
+                            child: const Text("Save")),
                       );
-                    });
-              },
-              child: const Icon(Icons.add_rounded),
-            ),
-          ),
-        ],
+                    })
+                  ],
+                );
+              });
+        },
+        child: const Icon(Icons.add_rounded),
       ),
     );
   }
