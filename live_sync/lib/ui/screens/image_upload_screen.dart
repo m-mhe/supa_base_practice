@@ -13,13 +13,15 @@ class ImageUploadScreen extends StatefulWidget {
 }
 
 class _ImageUploadScreenState extends State<ImageUploadScreen> {
-  File? imageFile = null;
+  File? imageFile;
+  String? fileType;
 
   Future<void> _pick() async {
     ImagePicker picker = ImagePicker();
     XFile? pickedImage = await picker.pickImage(source: ImageSource.gallery);
     if (pickedImage != null) {
       imageFile = File(pickedImage.path);
+      fileType = pickedImage.mimeType;
       setState(() {});
     }
   }
@@ -37,7 +39,10 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
           children: [
             imageFile == null
                 ? const Text('Pick an image to upload')
-                : Image.file(imageFile!),
+                : SizedBox(
+                    width: MediaQuery.sizeOf(context).width - 10,
+                    height: MediaQuery.sizeOf(context).width - 10,
+                    child: Image.file(imageFile!, fit: BoxFit.cover,)),
             ElevatedButton(onPressed: _pick, child: Text('Pick')),
             GetBuilder<ImageDataUploadController>(builder: (controller) {
               return Visibility(
@@ -46,7 +51,10 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                   child: ElevatedButton(
                       onPressed: () async {
                         await controller.uploadAnImage(imageFile: imageFile);
-                        bottomPopUpMessage(context: context, isError: false, message: "Success!");
+                        bottomPopUpMessage(
+                            context: context,
+                            isError: false,
+                            message: "Success!");
                       },
                       child: const Text('Upload')));
             }),

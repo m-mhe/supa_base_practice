@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:live_sync/ui/screens/image_show_screen.dart';
 import 'package:live_sync/ui/screens/image_upload_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -36,11 +37,24 @@ class ImageNotes extends StatelessWidget {
                       mainAxisSpacing: 0,
                       childAspectRatio: 1),
                   itemBuilder: (BuildContext context, index) {
-                    return Container(
-                      decoration: BoxDecoration(
-                          image: DecorationImage(
-                              image: NetworkImage(
-                                  snapshot.data?[index]["image_url"]), fit: BoxFit.cover)),
+                    return InkWell(
+                      onTap: () {
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (BuildContext context) {
+                          return ImageShowScreen(
+                            path: snapshot.data?[index]["file_path"],
+                            id: snapshot.data?[index]["id"],
+                            imageUrl: snapshot.data?[index]["image_url"],
+                          );
+                        }));
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                            image: DecorationImage(
+                                image: NetworkImage(
+                                    snapshot.data?[index]["image_url"]),
+                                fit: BoxFit.cover)),
+                      ),
                     );
                   }),
             );

@@ -16,7 +16,7 @@ class ImageDataUploadController extends GetxController{
       final String path = "uploads/$fieName";
       await Supabase.instance.client.storage.from("ImageStore").upload(path, imageFile);
       final String imageUrl = Supabase.instance.client.storage.from("ImageStore").getPublicUrl(path);
-      await Supabase.instance.client.from("images").insert({"image_url":imageUrl});
+      await Supabase.instance.client.from("images").insert({"image_url":imageUrl, "file_path":path});
       _loading = false;
       update();
     }
