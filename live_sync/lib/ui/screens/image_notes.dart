@@ -17,14 +17,13 @@ class ImageNotes extends StatelessWidget {
       body: StreamBuilder<List<Map<String, dynamic>>>(
           stream: imageUrlStream,
           builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            }
             if (snapshot.hasError) {
               return Center(
                 child: Text(snapshot.error.toString()),
+              );
+            } else if (!snapshot.hasData) {
+              return const Center(
+                child: CircularProgressIndicator(),
               );
             }
             return Padding(

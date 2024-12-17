@@ -43,7 +43,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                     width: MediaQuery.sizeOf(context).width - 10,
                     height: MediaQuery.sizeOf(context).width - 10,
                     child: Image.file(imageFile!, fit: BoxFit.cover,)),
-            ElevatedButton(onPressed: _pick, child: Text('Pick')),
+            ElevatedButton(onPressed: _pick, child: const Text('Pick')),
             GetBuilder<ImageDataUploadController>(builder: (controller) {
               return Visibility(
                   visible: !controller.loading,
